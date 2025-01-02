@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group input {
+            padding: 8px;
+            margin: 5px 0;
+            width: 300px;
+        }
+        .form-group button {
+            padding: 10px 20px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Net Worth Tracker</h1>
+    <h2>Login</h2>
+    <div class="form-group">
+        <input type="text" id="username" placeholder="Username">
+    </div>
+    <div class="form-group">
+        <input type="password" id="password" placeholder="Password">
+    </div>
+    <button onclick="login()">Login</button>
+    <p id="error" class="error"></p>
+
+    <script>
+        // Predefined users list (managed by you in the codebase)
+        const users = {
+            "admin": "password123",
+            "user1": "mypassword",
+            "keough": "securepassword"
+        };
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Validate user credentials
+            if (users[username] && users[username] === password) {
+                // Store logged-in user in sessionStorage
+                sessionStorage.setItem('loggedInUser', username);
+
+                // Redirect to main application
+                window.location.href = "index.html";
+            } else {
+                document.getElementById('error').textContent = "Invalid username or password.";
+            }
+        }
+    </script>
+</body>
+</html>
