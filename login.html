@@ -8,13 +8,13 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            margin-top: 50px;
+            margin: 50px;
         }
         .form-group {
             margin-bottom: 15px;
         }
         .form-group input {
-            padding: 8px;
+            padding: 10px;
             margin: 5px 0;
             width: 300px;
         }
@@ -27,13 +27,13 @@
         }
         .error {
             color: red;
-            margin-top: 10px;
+            font-size: 0.9em;
         }
     </style>
 </head>
 <body>
-    <h1>Net Worth Tracker</h1>
-    <h2>Login</h2>
+    <h1>Login</h1>
+    <p>Please enter your username and password to continue:</p>
     <div class="form-group">
         <input type="text" id="username" placeholder="Username">
     </div>
@@ -44,21 +44,16 @@
     <p id="error" class="error"></p>
 
     <script>
-        // Predefined users list (managed by you in the codebase)
-        const users = {
-            "keough": "securepassword"
-        };
+        // Predefined username and password
+        const validUsername = "admin";
+        const validPassword = "password123";
 
         function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
-            // Validate user credentials
-            if (users[username] && users[username] === password) {
-                // Store logged-in user in sessionStorage
-                sessionStorage.setItem('loggedInUser', username);
-
-                // Redirect to main application
+            if (username === validUsername && password === validPassword) {
+                sessionStorage.setItem('loggedIn', 'true');
                 window.location.href = "index.html";
             } else {
                 document.getElementById('error').textContent = "Invalid username or password.";

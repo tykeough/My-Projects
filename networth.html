@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net Worth Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <script>
+        // Redirect to login if not authenticated
+        if (sessionStorage.getItem('loggedIn') !== 'true') {
+            window.location.href = "index.html";
+        }
+    </script>
+
+    <div class="container">
+        <h1>Welcome, <span id="currentUser"></span>!</h1>
+        <button onclick="logout()">Logout</button>
+        <p>Log your assets, liabilities, and track your net worth over time.</p>
+
+        <!-- Input Section -->
+        <div class="section">
+            <h2>Balance Sheet</h2>
+            <label for="entryDate">Date</label>
+            <input type="date" id="entryDate">
+
+            <h3>Assets</h3>
+            <div id="assetsContainer">
+                <!-- Asset inputs will appear here -->
+            </div>
+            <button class="add-btn" onclick="addField('assetsContainer')">+ Add Asset</button>
+
+            <h3>Liabilities</h3>
+            <div id="liabilitiesContainer">
+                <!-- Liability inputs will appear here -->
+            </div>
+            <button class="add-btn" onclick="addField('liabilitiesContainer')">+ Add Liability</button>
+
+            <div class="net-worth">
+                <p><strong>Net Worth:</strong> $<span id="netWorth">0.00</span></p>
+            </div>
+
+            <button class="add-btn" onclick="saveLog()">Save Entry</button>
+        </div>
+
+        <!-- Logs Section -->
+        <div class="section">
+            <h2>Historical Logs</h2>
+            <table id="logsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Net Worth</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Historical logs will be displayed here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
