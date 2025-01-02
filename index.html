@@ -3,224 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Net Worth Tracker</title>
+    <title>My Projects</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: auto;
-        }
-        .section {
-            margin-bottom: 20px;
-        }
-        .section h2 {
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 5px;
-        }
-        .item {
+            font-family: "Garamond", "Times New Roman", serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
             display: flex;
+            justify-content: center;
             align-items: center;
-            margin-bottom: 10px;
+            height: 100vh; /* Full viewport height */
         }
-        .item input {
-            flex: 1;
-            margin-right: 10px;
-            padding: 8px;
-        }
-        .item button {
-            padding: 5px 10px;
-            background-color: #d9534f;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .add-btn {
-            padding: 5px 10px;
-            background-color: #5cb85c;
-            color: white;
-            border: none;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .net-worth {
-            font-size: 1.5em;
-            margin-top: 20px;
+
+        .container {
             text-align: center;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
         }
-        th {
-            background-color: #f4f4f4;
+
+        .projects button {
+            padding: 12px 24px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: "Garamond", "Times New Roman", serif;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .projects button:hover {
+            background-color: #555;
+        }
+
+        footer {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            color: #666;
         }
     </style>
 </head>
 <body>
     <script>
-        // Redirect to login page if no user is logged in
-        const loggedInUser = sessionStorage.getItem('loggedInUser');
-        if (!loggedInUser) {
+        // Check if the access code has been validated
+        if (!sessionStorage.getItem('accessGranted')) {
             window.location.href = "login.html";
         }
     </script>
 
     <div class="container">
-        <h1>Welcome, <span id="currentUser"></span>!</h1>
-        <button onclick="logout()">Logout</button>
-        <p>Log your assets, liabilities, and track your net worth over time.</p>
+        <h1>My Projects</h1>
+        <p>Choose a project to explore:</p>
 
-        <!-- Input Section -->
-        <div class="section">
-            <h2>Balance Sheet</h2>
-            <label for="entryDate">Date</label>
-            <input type="date" id="entryDate">
-
-            <h3>Assets</h3>
-            <div id="assetsContainer">
-                <!-- Asset inputs will appear here -->
-            </div>
-            <button class="add-btn" onclick="addField('assetsContainer')">+ Add Asset</button>
-
-            <h3>Liabilities</h3>
-            <div id="liabilitiesContainer">
-                <!-- Liability inputs will appear here -->
-            </div>
-            <button class="add-btn" onclick="addField('liabilitiesContainer')">+ Add Liability</button>
-
-            <div class="net-worth">
-                <p><strong>Net Worth:</strong> $<span id="netWorth">0.00</span></p>
-            </div>
-
-            <button class="add-btn" onclick="saveLog()">Save Entry</button>
+        <div class="projects">
+            <button onclick="navigateTo('networth.html')">Net Worth Tracker</button>
         </div>
 
-        <!-- Logs Section -->
-        <div class="section">
-            <h2>Historical Logs</h2>
-            <table id="logsTable">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Net Worth</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Historical logs will be displayed here -->
-                </tbody>
-            </table>
-        </div>
+        <footer>
+            <p>&copy; 2025 Ty Keough. All rights reserved.</p>
+        </footer>
     </div>
 
-    <footer style="text-align: center; margin-top: 20px;">
-        <p>&copy; 2025 Keough. All rights reserved. </p>
-    </footer> 
-
     <script>
-        // Display logged-in user
-        document.getElementById('currentUser').textContent = sessionStorage.getItem('loggedInUser');
-
-        function logout() {
-            // Clear session and redirect to login
-            sessionStorage.removeItem('loggedInUser');
-            window.location.href = "login.html";
+        function navigateTo(page) {
+            window.location.href = page;
         }
-
-        function addField(containerId) {
-            const container = document.getElementById(containerId);
-            const div = document.createElement('div');
-            div.classList.add('item');
-
-            div.innerHTML = `
-                <input type="text" placeholder="Name" class="name">
-                <input type="number" placeholder="Amount" class="amount" oninput="calculateNetWorth()">
-                <button onclick="removeField(this)">Remove</button>
-            `;
-            container.appendChild(div);
-        }
-
-        function removeField(button) {
-            const div = button.parentElement;
-            div.remove();
-            calculateNetWorth();
-        }
-
-        function calculateNetWorth() {
-            let totalAssets = 0;
-            let totalLiabilities = 0;
-
-            document.querySelectorAll('#assetsContainer .amount').forEach(field => {
-                totalAssets += parseFloat(field.value) || 0;
-            });
-
-            document.querySelectorAll('#liabilitiesContainer .amount').forEach(field => {
-                totalLiabilities += parseFloat(field.value) || 0;
-            });
-
-            const netWorth = totalAssets - totalLiabilities;
-            document.getElementById('netWorth').textContent = netWorth.toFixed(2);
-        }
-
-        function saveLog() {
-            const date = document.getElementById('entryDate').value;
-            const netWorth = parseFloat(document.getElementById('netWorth').textContent);
-
-            if (!date) {
-                alert('Please select a date.');
-                return;
-            }
-
-            const logsKey = `${sessionStorage.getItem('loggedInUser')}_logs`;
-            const logs = JSON.parse(localStorage.getItem(logsKey)) || [];
-            logs.push({ date, netWorth });
-            localStorage.setItem(logsKey, JSON.stringify(logs));
-
-            addLogToTable(date, netWorth, logs.length - 1);
-        }
-
-        function loadLogs() {
-            const logsKey = `${sessionStorage.getItem('loggedInUser')}_logs`;
-            const logs = JSON.parse(localStorage.getItem(logsKey)) || [];
-            logs.forEach((log, index) => addLogToTable(log.date, log.netWorth, index));
-        }
-
-        function addLogToTable(date, netWorth, index) {
-            const table = document.getElementById('logsTable').querySelector('tbody');
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${date}</td>
-                <td>$${netWorth.toFixed(2)}</td>
-                <td><button onclick="deleteLog(${index})">Delete</button></td>
-            `;
-            table.appendChild(row);
-        }
-
-        function deleteLog(index) {
-            const logsKey = `${sessionStorage.getItem('loggedInUser')}_logs`;
-            const logs = JSON.parse(localStorage.getItem(logsKey)) || [];
-            logs.splice(index, 1);
-            localStorage.setItem(logsKey, JSON.stringify(logs));
-
-            refreshLogsTable();
-        }
-
-        function refreshLogsTable() {
-            const table = document.getElementById('logsTable').querySelector('tbody');
-            table.innerHTML = '';
-            loadLogs();
-        }
-
-        document.addEventListener('DOMContentLoaded', loadLogs);
     </script>
 </body>
 </html>
