@@ -19,6 +19,8 @@
             background-color: #000;
             border: 1px solid white;
             position: relative;
+            width: 80vw; /* Set width to 80% of the viewport width */
+            height: 60vh; /* Set height to 60% of the viewport height */
         }
         #scoreBoard {
             position: absolute;
@@ -180,6 +182,9 @@
 
         // Start the game as soon as the page loads
         window.onload = startGame;
+
+        // Adjust canvas size when window is resized
+        window.onresize = resizeCanvas;
     </script>
 </body>
 </html>
