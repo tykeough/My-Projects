@@ -12,7 +12,8 @@
             height: 100vh;
             margin: 0;
             flex-direction: column;
-            background-color: white; /* Background color set to white */
+            background-color: black; /* Set background to black */
+            font-family: Arial, sans-serif; /* Set font to Arial */
         }
         canvas {
             background-color: #000;
@@ -24,8 +25,8 @@
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            color: white;
-            font-family: 'Comic Sans MS', cursive;
+            color: white; /* Set text color to white for contrast */
+            font-family: Arial, sans-serif;
             font-size: 4vw; /* Scale score text */
         }
         #replayButton {
@@ -38,88 +39,23 @@
             font-size: 16px;
             cursor: pointer;
             display: none; /* Hidden by default */
+            font-family: Arial, sans-serif;
         }
         #replayButton:hover {
             background-color: darkgreen;
         }
-        #deviceChoice {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: black;
-            font-family: 'Comic Sans MS', cursive;
-            font-size: 24px;
-            text-align: center;
-            z-index: 10; /* Ensure it is above the black background */
-        }
-        #deviceChoice button {
-            margin: 10px;
-            padding: 10px 20px;
-            background-color: blue;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        #deviceChoice button:hover {
-            background-color: darkblue;
-        }
-
-        /* Styles for touchscreen controls */
-        #touchControls {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        #touchControls button {
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 20px;
-            cursor: pointer;
-        }
-
-        #touchControls button:hover {
-            background-color: #45a049;
-        }
     </style>
 </head>
 <body>
-    <div id="deviceChoice">
-        <p>Are you playing on a computer or phone?</p>
-        <button onclick="startGame('computer')">Computer</button>
-        <button onclick="startGame('phone')">Phone</button>
-    </div>
-
     <div id="scoreBoard">Score: 0</div>
     <canvas id="gameCanvas"></canvas>
     <button id="replayButton" onclick="replayGame()">Replay</button>
-
-    <!-- Touchscreen controls for mobile -->
-    <div id="touchControls">
-        <button id="upButton" onclick="changeDirection('UP')">↑</button>
-        <button id="leftButton" onclick="changeDirection('LEFT')">←</button>
-        <button id="downButton" onclick="changeDirection('DOWN')">↓</button>
-        <button id="rightButton" onclick="changeDirection('RIGHT')">→</button>
-    </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreBoard = document.getElementById('scoreBoard');
         const replayButton = document.getElementById('replayButton');
-        const deviceChoice = document.getElementById('deviceChoice');
-        const touchControls = document.getElementById('touchControls');
 
         const box = 20; // Size of one grid block
         let snake = [];
@@ -127,7 +63,6 @@
         let direction = 'RIGHT';
         let score = 0;
         let game;
-        let device;
 
         // Dynamically set canvas size based on screen size
         function resizeCanvas() {
@@ -166,22 +101,10 @@
         function gameOver() {
             clearInterval(game); // Stop the game loop
             ctx.fillStyle = 'red';
-            ctx.font = '40px Comic Sans MS';
+            ctx.font = '40px Arial'; // Set font to Arial
             ctx.textAlign = 'center';
             ctx.fillText(`Game Over!`, canvas.width / 2, canvas.height / 2);
             replayButton.style.display = 'block'; // Show replay button
-        }
-
-        // Function to change direction based on button clicks
-        function changeDirection(newDirection) {
-            if (
-                (newDirection === 'UP' && direction !== 'DOWN') ||
-                (newDirection === 'DOWN' && direction !== 'UP') ||
-                (newDirection === 'LEFT' && direction !== 'RIGHT') ||
-                (newDirection === 'RIGHT' && direction !== 'LEFT')
-            ) {
-                direction = newDirection;
-            }
         }
 
         // Keyboard controls for computer
@@ -237,17 +160,10 @@
             drawFruit();
         }
 
-        function startGame(deviceChoice) {
-            device = deviceChoice;
-            deviceChoice = document.getElementById('deviceChoice');
-            deviceChoice.style.display = 'none'; // Hide the device selection screen
+        function startGame() {
             resizeCanvas();
             initializeGame();
-            if (device === 'phone') {
-                touchControls.style.display = 'flex'; // Show touchscreen controls
-            } else {
-                addKeyboardControls();
-            }
+            addKeyboardControls();
             game = setInterval(() => {
                 updateGame();
                 renderGame();
@@ -261,6 +177,9 @@
                 renderGame();
             }, 100);
         }
+
+        // Start the game as soon as the page loads
+        window.onload = startGame;
     </script>
 </body>
 </html>
