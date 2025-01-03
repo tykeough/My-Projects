@@ -10,9 +10,9 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: black;
             margin: 0;
             flex-direction: column;
+            background-color: white; /* Background color set to white */
         }
         canvas {
             background-color: #000;
@@ -47,7 +47,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: white;
+            color: black;
             font-family: 'Comic Sans MS', cursive;
             font-size: 24px;
             text-align: center;
@@ -66,6 +66,32 @@
         #deviceChoice button:hover {
             background-color: darkblue;
         }
+
+        /* Styles for touchscreen controls */
+        #touchControls {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        #touchControls button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        #touchControls button:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
@@ -74,9 +100,18 @@
         <button onclick="startGame('computer')">Computer</button>
         <button onclick="startGame('phone')">Phone</button>
     </div>
+
     <div id="scoreBoard">Score: 0</div>
     <canvas id="gameCanvas"></canvas>
     <button id="replayButton" onclick="replayGame()">Replay</button>
+
+    <!-- Touchscreen controls for mobile -->
+    <div id="touchControls">
+        <button id="upButton" onclick="changeDirection('UP')">↑</button>
+        <button id="leftButton" onclick="changeDirection('LEFT')">←</button>
+        <button id="downButton" onclick="changeDirection('DOWN')">↓</button>
+        <button id="rightButton" onclick="changeDirection('RIGHT')">→</button>
+    </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -84,6 +119,7 @@
         const scoreBoard = document.getElementById('scoreBoard');
         const replayButton = document.getElementById('replayButton');
         const deviceChoice = document.getElementById('deviceChoice');
+        const touchControls = document.getElementById('touchControls');
 
         const box = 20; // Size of one grid block
         let snake = [];
@@ -136,30 +172,16 @@
             replayButton.style.display = 'block'; // Show replay button
         }
 
-        // Touch controls
-        let touchStart = null;
-        function addTouchControls() {
-            canvas.addEventListener('touchstart', (e) => {
-                touchStart = e.changedTouches[0];
-            });
-
-            canvas.addEventListener('touchmove', (e) => {
-                if (!touchStart) return;
-
-                const touchEnd = e.changedTouches[0];
-                const dx = touchEnd.clientX - touchStart.clientX;
-                const dy = touchEnd.clientY - touchStart.clientY;
-
-                if (Math.abs(dx) > Math.abs(dy)) {
-                    if (dx > 0 && direction !== 'LEFT') direction = 'RIGHT';
-                    if (dx < 0 && direction !== 'RIGHT') direction = 'LEFT';
-                } else {
-                    if (dy > 0 && direction !== 'UP') direction = 'DOWN';
-                    if (dy < 0 && direction !== 'DOWN') direction = 'UP';
-                }
-
-                touchStart = touchEnd;
-            });
+        // Function to change direction based on button clicks
+        function changeDirection(newDirection) {
+            if (
+                (newDirection === 'UP' && direction !== 'DOWN') ||
+                (newDirection === 'DOWN' && direction !== 'UP') ||
+                (newDirection === 'LEFT' && direction !== 'RIGHT') ||
+                (newDirection === 'RIGHT' && direction !== 'LEFT')
+            ) {
+                direction = newDirection;
+            }
         }
 
         // Keyboard controls for computer
@@ -222,7 +244,7 @@
             resizeCanvas();
             initializeGame();
             if (device === 'phone') {
-                addTouchControls();
+                touchControls.style.display = 'flex'; // Show touchscreen controls
             } else {
                 addKeyboardControls();
             }
