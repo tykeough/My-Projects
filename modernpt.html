@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Price History</title>
+    <script>
+        async function fetchStockHistory() {
+            const stockSymbol = document.getElementById('stockSymbol').value.trim();
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!stockSymbol || !startDate || !endDate) {
+                alert('Please fill in all fields.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/get-stock-history?symbol=${stockSymbol}&start=${startDate}&end=${endDate}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const tableBody = document.getElementById('historyTableBody');
+                    tableBody.innerHTML = ''; // Clear previous results
+
+                    data.history.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${new Date(row.Date).toLocaleDateString()}</td>
+                            <td>${row.Close.toFixed(2)}</td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+                } else {
+                    const errorData = await response.json();
+                    alert(`Error: ${errorData.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                alert('Unable to connect to the server.');
+                console.error(error);
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Stock Price History Viewer</h1>
+    <label for="stockSymbol">Stock Symbol:</label>
+    <input type="text" id="stockSymbol" placeholder="e.g., AAPL">
+    <br>
+    <label for="startDate">Start Date:</label>
+    <input type="date" id="startDate">
+    <br>
+    <label for="endDate">End Date:</label>
+    <input type="date" id="endDate">
+    <br>
+    <button onclick="fetchStockHistory()">Get Stock History</button>
+
+    <h2>Price History</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Close Price ($)</th>
+            </tr>
+        </thead>
+        <tbody id="historyTableBody">
+            <!-- Rows will be inserted here -->
+        </tbody>
+    </table>
+</body>
+</html>

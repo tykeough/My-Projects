@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ty's Snake Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            margin: 0;
+            flex-direction: column;
+        }
+        canvas {
+            background-color: #000;
+            border: 1px solid white;
+            position: relative;
+        }
+        #scoreBoard {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-family: 'Comic Sans MS', cursive;
+            font-size: 20px;
+        }
+        #replayButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: green;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+        }
+        #replayButton:hover {
+            background-color: darkgreen;
+        }
+    </style>
+</head>
+<body>
+    <div id="scoreBoard">Score: 0</div>
+    <canvas id="gameCanvas" width="720" height="480"></canvas>
+    <button id="replayButton" onclick="replayGame()">Replay</button>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreBoard = document.getElementById('scoreBoard');
+        const replayButton = document.getElementById('replayButton');
+
+        const box = 20; // Size of one grid block
+        let snake = [];
+        let fruit = {};
+        let direction = 'RIGHT';
+        let score = 0;
+        let game;
+
+        function initializeGame() {
+            snake = [{ x: 5 * box, y: 5 * box }];
+            fruit = {
+                x: Math.floor(Math.random() * (canvas.width / box)) * box,
+                y: Math.floor(Math.random() * (canvas.height / box)) * box
+            };
+            direction = 'RIGHT';
+            score = 0;
+            scoreBoard.textContent = `Score: ${score}`; // Reset score display
+            replayButton.style.display = 'none'; // Hide replay button
+        }
+
+        function drawSnake() {
+            snake.forEach((segment, index) => {
+                ctx.fillStyle = index === 0 ? 'green' : 'lightgreen';
+                ctx.fillRect(segment.x, segment.y, box, box);
+            });
+        }
+
+        function drawFruit() {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(fruit.x, fruit.y, box, box);
+        }
+
+        function updateScore() {
+            scoreBoard.textContent = `Score: ${score}`;
+        }
+
+        function gameOver() {
+            clearInterval(game); // Stop the game loop
+            ctx.fillStyle = 'red';
+            ctx.font = '40px Comic Sans MS';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Game Over!`, canvas.width / 2, canvas.height / 2);
+            replayButton.style.display = 'block'; // Show replay button
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowUp' && direction !== 'DOWN') direction = 'UP';
+            if (event.key === 'ArrowDown' && direction !== 'UP') direction = 'DOWN';
+            if (event.key === 'ArrowLeft' && direction !== 'RIGHT') direction = 'LEFT';
+            if (event.key === 'ArrowRight' && direction !== 'LEFT') direction = 'RIGHT';
+        });
+
+        function updateGame() {
+            const head = { ...snake[0] };
+            if (direction === 'UP') head.y -= box;
+            if (direction === 'DOWN') head.y += box;
+            if (direction === 'LEFT') head.x -= box;
+            if (direction === 'RIGHT') head.x += box;
+
+            // Check for collisions with the wall
+            if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height) {
+                gameOver();
+                return;
+            }
+
+            // Check for collisions with itself
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    gameOver();
+                    return;
+                }
+            }
+
+            // Check if the snake eats the fruit
+            if (head.x === fruit.x && head.y === fruit.y) {
+                score += 10;
+                updateScore(); // Update the score on the scoreboard
+                fruit = {
+                    x: Math.floor(Math.random() * (canvas.width / box)) * box,
+                    y: Math.floor(Math.random() * (canvas.height / box)) * box
+                };
+            } else {
+                snake.pop(); // Remove the tail
+            }
+
+            // Add the new head
+            snake.unshift(head);
+        }
+
+        function renderGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawSnake();
+            drawFruit();
+        }
+
+        function startGame() {
+            initializeGame();
+            game = setInterval(() => {
+                updateGame();
+                renderGame();
+            }, 100);
+        }
+
+        function replayGame() {
+            startGame();
+        }
+
+        // Start the game for the first time
+        startGame();
+    </script>
+</body>
+</html>
