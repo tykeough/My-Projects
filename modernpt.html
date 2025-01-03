@@ -4,47 +4,135 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Price History</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script> <!-- For Excel -->
+    <style>
+        .container {
+            margin-top: 20px; /* Adds space below the Fetch Data button */
+            display: flex;
+            justify-content: flex-start; /* Align content to the left */
+            gap: 20px;
+        }
+        .table-container {
+            max-width: 600px; /* Limit table width */
+            width: 100%;
+        }
+        .actions {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .actions h2 {
+            margin: 0;
+            margin-right: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
     <script>
-        async function fetchStockHistory() {
+        async function fetchStockData() {
             const stockSymbol = document.getElementById('stockSymbol').value.trim();
+            const frequency = document.getElementById('frequency').value;
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
+            const apiKey = "163M41VVR6RQ8JQT"; // Replace with your API key
 
-            if (!stockSymbol || !startDate || !endDate) {
-                alert('Please fill in all fields.');
+            if (!stockSymbol) {
+                alert('Please enter a stock symbol.');
                 return;
             }
 
             try {
-                const response = await fetch(`http://127.0.0.1:5000/get-stock-history?symbol=${stockSymbol}&start=${startDate}&end=${endDate}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    const tableBody = document.getElementById('historyTableBody');
-                    tableBody.innerHTML = ''; // Clear previous results
+                // Determine the correct function name based on frequency
+                const functionName = frequency === "daily" ? "TIME_SERIES_DAILY" :
+                                     frequency === "weekly" ? "TIME_SERIES_WEEKLY" : 
+                                     "TIME_SERIES_MONTHLY";
 
-                    data.history.forEach(row => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${new Date(row.Date).toLocaleDateString()}</td>
-                            <td>${row.Close.toFixed(2)}</td>
-                        `;
-                        tableBody.appendChild(tr);
-                    });
-                } else {
-                    const errorData = await response.json();
-                    alert(`Error: ${errorData.error || 'Unknown error'}`);
+                const url = `https://www.alphavantage.co/query?function=${functionName}&symbol=${stockSymbol}&apikey=${apiKey}&outputsize=full`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                // Determine the correct key in the response
+                const key = frequency === "daily" ? "Time Series (Daily)" :
+                            frequency === "weekly" ? "Weekly Time Series" :
+                            "Monthly Time Series";
+
+                if (!data[key]) {
+                    alert('No data available or invalid stock symbol.');
+                    return;
                 }
+
+                const timeSeries = data[key];
+                const tableBody = document.getElementById('stockTableBody');
+                tableBody.innerHTML = ''; // Clear previous data
+
+                // Filter, sort (oldest to newest), and populate the table
+                const sortedData = Object.entries(timeSeries)
+                    .filter(([date]) => (!startDate || date >= startDate) && (!endDate || date <= endDate))
+                    .sort(([a], [b]) => new Date(a) - new Date(b)); // Oldest to newest
+
+                sortedData.forEach(([date, details]) => {
+                    const row = `
+                        <tr>
+                            <td>${date}</td>
+                            <td>${parseFloat(details["1. open"]).toFixed(2)}</td>
+                            <td>${parseFloat(details["2. high"]).toFixed(2)}</td>
+                            <td>${parseFloat(details["3. low"]).toFixed(2)}</td>
+                            <td>${parseFloat(details["4. close"]).toFixed(2)}</td>
+                            <td>${parseInt(details["5. volume"], 10)}</td>
+                        </tr>`;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+
+                // Save the sorted data for download
+                window.sortedStockData = sortedData.map(([date, details]) => ({
+                    Date: date,
+                    Open: parseFloat(details["1. open"]),
+                    High: parseFloat(details["2. high"]),
+                    Low: parseFloat(details["3. low"]),
+                    Close: parseFloat(details["4. close"]),
+                    Volume: parseInt(details["5. volume"], 10)
+                }));
             } catch (error) {
-                alert('Unable to connect to the server.');
-                console.error(error);
+                console.error('Error fetching stock data:', error);
+                alert('An error occurred while fetching the stock data.');
             }
+        }
+
+        function downloadAsExcel() {
+            if (!window.sortedStockData || window.sortedStockData.length === 0) {
+                alert('No data available to download.');
+                return;
+            }
+
+            const worksheet = XLSX.utils.json_to_sheet(window.sortedStockData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Stock Data");
+
+            XLSX.writeFile(workbook, "Stock_Data.xlsx");
         }
     </script>
 </head>
 <body>
-    <h1>Stock Price History Viewer</h1>
+    <h1>Stock Price History</h1>
     <label for="stockSymbol">Stock Symbol:</label>
     <input type="text" id="stockSymbol" placeholder="e.g., AAPL">
+    <br>
+    <label for="frequency">Frequency:</label>
+    <select id="frequency">
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+    </select>
     <br>
     <label for="startDate">Start Date:</label>
     <input type="date" id="startDate">
@@ -52,19 +140,31 @@
     <label for="endDate">End Date:</label>
     <input type="date" id="endDate">
     <br>
-    <button onclick="fetchStockHistory()">Get Stock History</button>
+    <button onclick="fetchStockData()">Fetch Data</button>
 
-    <h2>Price History</h2>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Close Price ($)</th>
-            </tr>
-        </thead>
-        <tbody id="historyTableBody">
-            <!-- Rows will be inserted here -->
-        </tbody>
-    </table>
+    <div class="container">
+        <div class="table-container">
+            <div class="actions">
+                <h2>Data Table</h2>
+                <button onclick="downloadAsExcel()">Download as Excel</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Open</th>
+                        <th>High</th>
+                        <th>Low</th>
+                        <th>Close</th>
+                        <th>Volume</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                    <!-- Stock data will appear here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 </body>
 </html>
