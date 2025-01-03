@@ -21,12 +21,12 @@
         }
         #scoreBoard {
             position: absolute;
-            top: 0;
+            top: 10px;
             left: 50%;
             transform: translateX(-50%);
             color: white;
             font-family: 'Comic Sans MS', cursive;
-            font-size: 20px;
+            font-size: 4vw; /* Scale score text */
         }
         #replayButton {
             margin-top: 20px;
@@ -42,11 +42,40 @@
         #replayButton:hover {
             background-color: darkgreen;
         }
+        #deviceChoice {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-family: 'Comic Sans MS', cursive;
+            font-size: 24px;
+            text-align: center;
+            z-index: 10; /* Ensure it is above the black background */
+        }
+        #deviceChoice button {
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: blue;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #deviceChoice button:hover {
+            background-color: darkblue;
+        }
     </style>
 </head>
 <body>
+    <div id="deviceChoice">
+        <p>Are you playing on a computer or phone?</p>
+        <button onclick="startGame('computer')">Computer</button>
+        <button onclick="startGame('phone')">Phone</button>
+    </div>
     <div id="scoreBoard">Score: 0</div>
-    <canvas id="gameCanvas" width="720" height="480"></canvas>
+    <canvas id="gameCanvas"></canvas>
     <button id="replayButton" onclick="replayGame()">Replay</button>
 
     <script>
@@ -54,6 +83,7 @@
         const ctx = canvas.getContext('2d');
         const scoreBoard = document.getElementById('scoreBoard');
         const replayButton = document.getElementById('replayButton');
+        const deviceChoice = document.getElementById('deviceChoice');
 
         const box = 20; // Size of one grid block
         let snake = [];
@@ -61,6 +91,13 @@
         let direction = 'RIGHT';
         let score = 0;
         let game;
+        let device;
+
+        // Dynamically set canvas size based on screen size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth * 0.8;
+            canvas.height = window.innerHeight * 0.6;
+        }
 
         function initializeGame() {
             snake = [{ x: 5 * box, y: 5 * box }];
@@ -99,12 +136,41 @@
             replayButton.style.display = 'block'; // Show replay button
         }
 
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'ArrowUp' && direction !== 'DOWN') direction = 'UP';
-            if (event.key === 'ArrowDown' && direction !== 'UP') direction = 'DOWN';
-            if (event.key === 'ArrowLeft' && direction !== 'RIGHT') direction = 'LEFT';
-            if (event.key === 'ArrowRight' && direction !== 'LEFT') direction = 'RIGHT';
-        });
+        // Touch controls
+        let touchStart = null;
+        function addTouchControls() {
+            canvas.addEventListener('touchstart', (e) => {
+                touchStart = e.changedTouches[0];
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (!touchStart) return;
+
+                const touchEnd = e.changedTouches[0];
+                const dx = touchEnd.clientX - touchStart.clientX;
+                const dy = touchEnd.clientY - touchStart.clientY;
+
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    if (dx > 0 && direction !== 'LEFT') direction = 'RIGHT';
+                    if (dx < 0 && direction !== 'RIGHT') direction = 'LEFT';
+                } else {
+                    if (dy > 0 && direction !== 'UP') direction = 'DOWN';
+                    if (dy < 0 && direction !== 'DOWN') direction = 'UP';
+                }
+
+                touchStart = touchEnd;
+            });
+        }
+
+        // Keyboard controls for computer
+        function addKeyboardControls() {
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'ArrowUp' && direction !== 'DOWN') direction = 'UP';
+                if (event.key === 'ArrowDown' && direction !== 'UP') direction = 'DOWN';
+                if (event.key === 'ArrowLeft' && direction !== 'RIGHT') direction = 'LEFT';
+                if (event.key === 'ArrowRight' && direction !== 'LEFT') direction = 'RIGHT';
+            });
+        }
 
         function updateGame() {
             const head = { ...snake[0] };
@@ -149,8 +215,17 @@
             drawFruit();
         }
 
-        function startGame() {
+        function startGame(deviceChoice) {
+            device = deviceChoice;
+            deviceChoice = document.getElementById('deviceChoice');
+            deviceChoice.style.display = 'none'; // Hide the device selection screen
+            resizeCanvas();
             initializeGame();
+            if (device === 'phone') {
+                addTouchControls();
+            } else {
+                addKeyboardControls();
+            }
             game = setInterval(() => {
                 updateGame();
                 renderGame();
@@ -158,11 +233,12 @@
         }
 
         function replayGame() {
-            startGame();
+            initializeGame();
+            game = setInterval(() => {
+                updateGame();
+                renderGame();
+            }, 100);
         }
-
-        // Start the game for the first time
-        startGame();
     </script>
 </body>
 </html>
