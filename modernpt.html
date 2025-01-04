@@ -3,187 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Price History</title>
-    
-    <!-- Link to the PNG Favicon -->
-    <link rel="icon" href="tkfavicon.png" type="image/png">
-
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script> <!-- For Excel -->
+    <title>Stock Data Viewer</title>
     <style>
-        .container {
-            margin-top: 20px; /* Adds space below the Fetch Data button */
-            display: flex;
-            justify-content: flex-start; /* Align content to the left */
-            gap: 20px;
-        }
-        .table-container {
-            max-width: 600px; /* Limit table width */
-            width: 100%;
-        }
-        .actions {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .actions h2 {
-            margin: 0;
-            margin-right: 10px;
-        }
         table {
-            width: 100%;
+            width: auto;  /* Table width will adjust based on content */
             border-collapse: collapse;
+            table-layout: fixed; /* Ensures the columns don't stretch */
         }
         th, td {
             border: 1px solid #ddd;
             padding: 8px;
-            text-align: left;
+            text-align: center;
         }
         th {
             background-color: #f2f2f2;
         }
+        td, th {
+            word-wrap: break-word;
+        }
+        /* Fixed widths for Date and Close columns */
+        th:nth-child(1), td:nth-child(1) {
+            width: 120px; /* Date column width */
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        th:nth-child(2), td:nth-child(2) {
+            width: 80px;  /* Close column width */
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
+</head>
+<body>
+    <h1>Stock Data Viewer</h1>
+    <label for="stockSymbol">Stock Symbol:</label>
+    <input type="text" id="stockSymbol" placeholder="e.g., MSFT">
+    <br>
+    <button onclick="fetchStockData()">Fetch Data</button>
+
+    <h2>Stock Data Table</h2>
+    <table>
+        <thead id="tableHead">
+            <!-- Table headers will be dynamically created -->
+        </thead>
+        <tbody id="tableBody">
+            <!-- Table rows will be dynamically created -->
+        </tbody>
+    </table>
+
     <script>
         async function fetchStockData() {
             const stockSymbol = document.getElementById('stockSymbol').value.trim();
-            const frequency = document.getElementById('frequency').value;
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            const apiKey = "163M41VVR6RQ8JQT"; // Replace with your API key
 
             if (!stockSymbol) {
                 alert('Please enter a stock symbol.');
                 return;
             }
 
-            // Validate date range
-            if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-                alert("Start date must be earlier than end date.");
-                return;
-            }
+            const url = `http://127.0.0.1:5000/get_stock_data?symbol=${stockSymbol}`;
 
             try {
-                // Determine the correct function name based on frequency
-                const functionName = frequency === "daily" ? "TIME_SERIES_DAILY" :
-                                     frequency === "weekly" ? "TIME_SERIES_WEEKLY" : 
-                                     "TIME_SERIES_MONTHLY";
-
-                const url = `https://www.alphavantage.co/query?function=${functionName}&symbol=${stockSymbol}&apikey=${apiKey}&outputsize=full`;
                 const response = await fetch(url);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    alert(`Error fetching stock data: ${errorText}`);
+                    return;
+                }
+
                 const data = await response.json();
-
-                // Check for common errors in the API response
-                if (data["Error Message"] || data["Note"]) {
-                    console.error(data["Error Message"] || data["Note"]);
-                    alert("Error fetching stock data. Please try again later or check your API key.");
-                    return;
-                }
-
-                // Determine the correct key in the response
-                const key = frequency === "daily" ? "Time Series (Daily)" :
-                            frequency === "weekly" ? "Weekly Time Series" :
-                            "Monthly Time Series";
-
-                if (!data[key]) {
-                    console.error("Unexpected API response:", data);
-                    alert('No data available or invalid stock symbol.');
-                    return;
-                }
-
-                const timeSeries = data[key];
-                const tableBody = document.getElementById('stockTableBody');
-                tableBody.innerHTML = ''; // Clear previous data
-
-                // Filter, sort (oldest to newest), and populate the table
-                const sortedData = Object.entries(timeSeries)
-                    .filter(([date]) => (!startDate || date >= startDate) && (!endDate || date <= endDate))
-                    .sort(([a], [b]) => new Date(a) - new Date(b)); // Oldest to newest
-
-                sortedData.forEach(([date, details]) => {
-                    const row = `
-                        <tr>
-                            <td>${date}</td>
-                            <td>${parseFloat(details["1. open"]).toFixed(2)}</td>
-                            <td>${parseFloat(details["2. high"]).toFixed(2)}</td>
-                            <td>${parseFloat(details["3. low"]).toFixed(2)}</td>
-                            <td>${parseFloat(details["4. close"]).toFixed(2)}</td>
-                            <td>${parseInt(details["5. volume"], 10)}</td>
-                        </tr>`;
-                    tableBody.insertAdjacentHTML('beforeend', row);
-                });
-
-                // Save the sorted data for download
-                window.sortedStockData = sortedData.map(([date, details]) => ({
-                    Date: date,
-                    Open: parseFloat(details["1. open"]),
-                    High: parseFloat(details["2. high"]),
-                    Low: parseFloat(details["3. low"]),
-                    Close: parseFloat(details["4. close"]),
-                    Volume: parseInt(details["5. volume"], 10)
-                }));
+                createTableFromJSON(data);
             } catch (error) {
-                console.error('Error fetching stock data:', error);
-                alert('An error occurred while fetching the stock data.');
+                console.error("Fetch error:", error);
+                alert('Failed to fetch data.');
             }
         }
 
-        function downloadAsExcel() {
-            if (!window.sortedStockData || window.sortedStockData.length === 0) {
-                alert('No data available to download.');
+        function createTableFromJSON(data) {
+            const tableHead = document.getElementById('tableHead');
+            const tableBody = document.getElementById('tableBody');
+
+            // Clear existing table content
+            tableHead.innerHTML = '';
+            tableBody.innerHTML = '';
+
+            if (!data || !data.columns || !data.data) {
+                alert("No data available.");
                 return;
             }
 
-            const worksheet = XLSX.utils.json_to_sheet(window.sortedStockData);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Stock Data");
+            // Create fixed headers "Date" and "Close"
+            const headerRow = document.createElement('tr');
+            ["Date", "Close"].forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            tableHead.appendChild(headerRow);
 
-            XLSX.writeFile(workbook, "Stock_Data.xlsx");
+            // Create table rows for the first two columns
+            data.data.forEach(row => {
+                const rowElement = document.createElement('tr');
+                // Only include the first two columns (Date and Close)
+                const formattedDate = formatDate(row[0]); // Format the Date
+                const cell1 = document.createElement('td');
+                cell1.textContent = formattedDate;
+                rowElement.appendChild(cell1);
+
+                const cell2 = document.createElement('td');
+                // Format the Close column to two decimal places
+                cell2.textContent = row[1].toFixed(2);
+                rowElement.appendChild(cell2);
+
+                tableBody.appendChild(rowElement);
+            });
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return date.toLocaleDateString('en-GB', options); // Example: "12 Dec 1980"
         }
     </script>
-</head>
-<body>
-    <h1>Stock Price History</h1>
-    <p> Note: API allows for 25 requests per day. Leaving dates empty will pull all data. </p>
-    <label for="stockSymbol">Stock Symbol:</label>
-    <input type="text" id="stockSymbol" placeholder="e.g., AAPL">
-    <br>
-    <label for="frequency">Frequency:</label>
-    <select id="frequency">
-        <option value="daily">Daily</option>
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
-    </select>
-    <br>
-    <label for="startDate">Start Date:</label>
-    <input type="date" id="startDate">
-    <br>
-    <label for="endDate">End Date:</label>
-    <input type="date" id="endDate">
-    <br>
-    <button onclick="fetchStockData()">Fetch Data</button>
-
-    <div class="container">
-        <div class="table-container">
-            <div class="actions">
-                <h2>Data Table</h2>
-                <button onclick="downloadAsExcel()">Download as Excel</button>
-            </div>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Open</th>
-                        <th>High</th>
-                        <th>Low</th>
-                        <th>Close</th>
-                        <th>Volume</th>
-                    </tr>
-                </thead>
-                <tbody id="stockTableBody">
-                    <!-- Stock data will appear here -->
-                </tbody>
-            </table>
-        </div>
-    </div>
 </body>
 </html>
