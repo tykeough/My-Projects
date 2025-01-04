@@ -6,9 +6,9 @@
     <title>Stock Data</title>
     <style>
         table {
-            width: auto;  /* Table width will adjust based on content */
+            width: auto;
             border-collapse: collapse;
-            table-layout: fixed; /* Ensures the columns don't stretch */
+            table-layout: fixed;
         }
         th, td {
             border: 1px solid #ddd;
@@ -21,47 +21,87 @@
         td, th {
             word-wrap: break-word;
         }
-        /* Fixed widths for Date and Close columns */
         th:nth-child(1), td:nth-child(1) {
-            width: 120px; /* Date column width */
+            width: 120px;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        th:nth-child(2), td:nth-child(2) {
-            width: 80px;  /* Close column width */
+        th:nth-child(2), td:nth-child(2), th:nth-child(3), td:nth-child(3) {
+            width: 80px;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
-        /* Error message styling */
+        #summaryTable {
+            border: 1px solid #ddd;
+            margin-left: 20px; /* Add space between Data Table and Summary Table */
+            display: none; /* Hide the summary table by default */
+        }
+        #summaryContainer {
+            display: inline-block;
+            vertical-align: top; /* Align tables directly */
+        }
+        #dataTableContainer {
+            display: inline-block;
+            vertical-align: top; /* Align tables directly */
+        }
+        #tableContainer {
+            display: flex;
+            margin-top: 10px;
+        }
         #error-message {
             color: red;
             font-weight: bold;
             margin-top: 10px;
         }
     </style>
-    <!-- Include the xlsx.js library for Excel export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
 </head>
 <body>
-    <h1>Stock Data</h1>
-    <label for="stockSymbol">Stock Symbol:</label>
-    <input type="text" id="stockSymbol" placeholder="e.g., MSFT">
+    <h1>Historical Stock Prices</h1>
+    <p>Enter a ticker, start date, and frequency to fetch and display stock data.</p>
+    <p>For 10Y Treasury, enter "^TNX"; For SP500 Index, enter "^GSPC". Summary stats unannualized.</p>
+    <p>Note: Data is fetched from a live server. If error occurs, please contact the administrator: tkeough@marshall.usc.edu.</p>
+    <label for="stockSymbol">Ticker:</label>
+    <input type="text" id="stockSymbol" style="margin-bottom: 5px;" placeholder="e.g., MSFT">
+    <br>
+    <label for="startDate">Start Date:</label>
+    <input type="date" style="margin-bottom: 5px;" id="startDate">
+    <br>
+    <label for="frequency">Frequency:</label>
+    <select id="frequency" style="margin-bottom: 5px;">
+        <option value="daily">Daily</option>
+        <option value="monthly">Monthly</option>
+        <option value="annual">Annual</option>
+    </select>
     <br>
     <button onclick="fetchStockData()">Fetch Data</button>
     <button onclick="downloadExcel()">Download Excel</button>
 
-    <h2>Data Table</h2>
-    <table>
-        <thead id="tableHead">
-            <!-- Table headers will be dynamically created -->
-        </thead>
-        <tbody id="tableBody">
-            <!-- Table rows will be dynamically created -->
-        </tbody>
-    </table>
+    <div id="tableContainer">
+        <div id="dataTableContainer">
+            <table>
+                <thead id="tableHead"></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div id="summaryContainer">
+            <table id="summaryTable">
+                <tr>
+                    <th>Statistic</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Average Return</td>
+                    <td id="averageReturn">-</td>
+                </tr>
+                <tr>
+                    <td>SD Return</td>
+                    <td id="stdReturn">-</td>
+                </tr>
+            </table>
+        </div>
+    </div>
 
-    <!-- Error message display -->
     <div id="error-message"></div>
 
     <script>
@@ -69,8 +109,10 @@
 
         async function fetchStockData() {
             const stockSymbol = document.getElementById('stockSymbol').value.trim();
+            const startDate = document.getElementById('startDate').value;
+            const frequency = document.getElementById('frequency').value;
             const errorMessageDiv = document.getElementById('error-message');
-            errorMessageDiv.innerHTML = '';  // Clear any previous error message
+            errorMessageDiv.innerHTML = '';
 
             if (!stockSymbol) {
                 errorMessageDiv.innerHTML = 'Please enter a stock symbol.';
@@ -88,80 +130,142 @@
                 }
 
                 const data = await response.json();
-                stockData = data;  // Save data for Excel export
-                createTableFromJSON(data);
+                stockData = data;
+
+                const filteredData = filterDataByStartDate(data.data, startDate);
+                const aggregatedData = aggregateDataByFrequency(filteredData, frequency);
+
+                createTableFromJSON({ columns: data.columns, data: aggregatedData });
+                calculateSummaryStatistics();
             } catch (error) {
                 console.error("Fetch error:", error);
                 errorMessageDiv.innerHTML = 'Server offline. Contact administrator.';
             }
         }
 
+        function filterDataByStartDate(data, startDate) {
+            if (!startDate) return data;
+            const start = new Date(startDate);
+            return data.filter(row => new Date(row[0]) >= start);
+        }
+
+        function aggregateDataByFrequency(data, frequency) {
+            if (frequency === "daily") return data;
+
+            const aggregatedData = [];
+            const keyFormat = {
+                monthly: date => `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`,
+                annual: date => `${date.getFullYear()}`
+            }[frequency];
+
+            const groupedData = data.reduce((acc, row) => {
+                const date = new Date(row[0]);
+                const key = keyFormat(date);
+                acc[key] = acc[key] || [];
+                acc[key].push(row[1]);
+                return acc;
+            }, {});
+
+            for (const [key, values] of Object.entries(groupedData)) {
+                const averageClose = values.reduce((sum, val) => sum + val, 0) / values.length;
+                aggregatedData.push([key, averageClose]);
+            }
+
+            return aggregatedData;
+        }
+
         function createTableFromJSON(data) {
             const tableHead = document.getElementById('tableHead');
             const tableBody = document.getElementById('tableBody');
+            const stockSymbol = document.getElementById('stockSymbol').value.trim();
 
-            // Clear existing table content
             tableHead.innerHTML = '';
             tableBody.innerHTML = '';
 
-            if (!data || !data.columns || !data.data) {
-                document.getElementById('error-message').innerHTML = "No data available.";
-                return;
-            }
+            const showReturnColumn = stockSymbol !== "^TNX";
 
-            // Create fixed headers "Date" and "Close"
             const headerRow = document.createElement('tr');
-            ["Date", "Close"].forEach(header => {
+            const headers = ["Date", "Close"];
+            if (showReturnColumn) headers.push("Return");
+            headers.forEach(header => {
                 const th = document.createElement('th');
                 th.textContent = header;
                 headerRow.appendChild(th);
             });
             tableHead.appendChild(headerRow);
 
-            // Create table rows for the first two columns
-            data.data.forEach(row => {
+            let previousClose = null;
+            data.data.forEach((row, index) => {
                 const rowElement = document.createElement('tr');
-                // Only include the first two columns (Date and Close)
-                const formattedDate = formatDate(row[0]); // Format the Date
-                const cell1 = document.createElement('td');
-                cell1.textContent = formattedDate;
-                rowElement.appendChild(cell1);
 
-                const cell2 = document.createElement('td');
-                // Format the Close column to two decimal places
-                cell2.textContent = row[1].toFixed(2);
-                rowElement.appendChild(cell2);
+                const dateCell = document.createElement('td');
+                dateCell.textContent = formatDate(row[0]);
+                rowElement.appendChild(dateCell);
 
+                const closeCell = document.createElement('td');
+                closeCell.textContent = row[1].toFixed(2);
+                rowElement.appendChild(closeCell);
+
+                if (showReturnColumn) {
+                    const returnCell = document.createElement('td');
+                    if (index === 0) {
+                        returnCell.textContent = "-";
+                    } else {
+                        const returnValue = ((row[1] / previousClose) - 1) * 100;
+                        returnCell.textContent = returnValue.toFixed(2) + "%";
+                    }
+                    rowElement.appendChild(returnCell);
+                }
+
+                previousClose = row[1];
                 tableBody.appendChild(rowElement);
             });
+
+            // Show the summary table after the main table is populated
+            document.getElementById('summaryTable').style.display = 'table';
         }
 
         function formatDate(dateString) {
             const date = new Date(dateString);
             const year = date.getFullYear();
-            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Add leading zero if month is single digit
-            const day = date.getDate().toString().padStart(2, '0'); // Add leading zero if day is single digit
-            return `${year}-${month}-${day}`; // Format as "yyyy-mm-dd"
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function calculateSummaryStatistics() {
+            const rows = Array.from(document.querySelectorAll('#tableBody tr'));
+            const returnValues = rows.slice(1).map(row => {
+                const returnCell = row.cells[2];
+                return returnCell ? parseFloat(returnCell.textContent) : NaN;
+            }).filter(value => !isNaN(value));
+
+            const averageReturn = returnValues.reduce((sum, val) => sum + val, 0) / returnValues.length || 0;
+            const stdReturn = Math.sqrt(returnValues.reduce((sum, val) => sum + Math.pow(val - averageReturn, 2), 0) / (returnValues.length - 1)) || 0;
+
+            document.getElementById('averageReturn').textContent = averageReturn.toFixed(2) + "%";
+            document.getElementById('stdReturn').textContent = stdReturn.toFixed(2) + "%";
         }
 
         function downloadExcel() {
-            if (!stockData || !stockData.data) {
+            const tableBody = document.getElementById('tableBody');
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+            if (rows.length === 0) {
                 alert('No data available to download.');
                 return;
             }
 
-            const ws = XLSX.utils.aoa_to_sheet([
-                ["Date", "Close"],  // Header row
-                ...stockData.data.map(row => [
-                    formatDate(row[0]),
-                    row[1].toFixed(2)
-                ])
-            ]);
+            const dataToExport = rows.map(row => Array.from(row.querySelectorAll('td')).map(cell => cell.textContent));
+            const headers = ["Date", "Close"];
+            if (document.getElementById('stockSymbol').value.trim() !== "^TNX") {
+                headers.push("Return");
+            }
+            const wsData = [headers, ...dataToExport];
 
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Stock Data");
 
-            // Save the Excel file
             XLSX.writeFile(wb, "stock_data.xlsx");
         }
     </script>
