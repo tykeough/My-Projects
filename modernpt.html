@@ -40,6 +40,8 @@
             margin-top: 10px;
         }
     </style>
+    <!-- Include the xlsx.js library for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
 </head>
 <body>
     <h1>Stock Data</h1>
@@ -47,6 +49,7 @@
     <input type="text" id="stockSymbol" placeholder="e.g., MSFT">
     <br>
     <button onclick="fetchStockData()">Fetch Data</button>
+    <button onclick="downloadExcel()">Download Excel</button>
 
     <h2>Data Table</h2>
     <table>
@@ -62,6 +65,8 @@
     <div id="error-message"></div>
 
     <script>
+        let stockData = [];
+
         async function fetchStockData() {
             const stockSymbol = document.getElementById('stockSymbol').value.trim();
             const errorMessageDiv = document.getElementById('error-message');
@@ -83,6 +88,7 @@
                 }
 
                 const data = await response.json();
+                stockData = data;  // Save data for Excel export
                 createTableFromJSON(data);
             } catch (error) {
                 console.error("Fetch error:", error);
@@ -132,8 +138,31 @@
 
         function formatDate(dateString) {
             const date = new Date(dateString);
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
-            return date.toLocaleDateString('en-GB', options); // Example: "12 Dec 1980"
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Add leading zero if month is single digit
+            const day = date.getDate().toString().padStart(2, '0'); // Add leading zero if day is single digit
+            return `${year}-${month}-${day}`; // Format as "yyyy-mm-dd"
+        }
+
+        function downloadExcel() {
+            if (!stockData || !stockData.data) {
+                alert('No data available to download.');
+                return;
+            }
+
+            const ws = XLSX.utils.aoa_to_sheet([
+                ["Date", "Close"],  // Header row
+                ...stockData.data.map(row => [
+                    formatDate(row[0]),
+                    row[1].toFixed(2)
+                ])
+            ]);
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Stock Data");
+
+            // Save the Excel file
+            XLSX.writeFile(wb, "stock_data.xlsx");
         }
     </script>
 </body>
