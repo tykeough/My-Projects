@@ -85,9 +85,12 @@
 
             // Send message to backend
             try {
-                const response = await fetch('http://127.0.0.1:5001/chat', {
+                const response = await fetch('https://7529-68-118-144-170.ngrok-free.app/chat', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true'
+                    },
                     body: JSON.stringify({ message: userInput })
                 });
 
