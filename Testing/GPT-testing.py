@@ -11,7 +11,7 @@ if not OPENAI_API_KEY:
     raise ValueError("OpenAI API key is not set. Please check your keys.env file.")
 
 # Initialize the OpenAI client
-client = OpenAI()
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Conversation history
 conversation = [{"role": "system", "content": "Act like a therapist and have a session with me. Start by asking me typically therapist questions."}]
@@ -29,10 +29,11 @@ while True:
     # Add user input to conversation history
     conversation.append({"role": "user", "content": user_input})
     
-    # Get response from OpenAI
+    # Get response from OpenAI and enable storing in the dashboard
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=conversation
+        messages=conversation,
+        store=True  # Enable storing the conversation in the dashboard
     )
     
     # Extract the assistant's reply
