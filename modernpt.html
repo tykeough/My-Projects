@@ -32,6 +32,13 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        /* Error message styling */
+        #error-message {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -51,12 +58,17 @@
         </tbody>
     </table>
 
+    <!-- Error message display -->
+    <div id="error-message"></div>
+
     <script>
         async function fetchStockData() {
             const stockSymbol = document.getElementById('stockSymbol').value.trim();
+            const errorMessageDiv = document.getElementById('error-message');
+            errorMessageDiv.innerHTML = '';  // Clear any previous error message
 
             if (!stockSymbol) {
-                alert('Please enter a stock symbol.');
+                errorMessageDiv.innerHTML = 'Please enter a stock symbol.';
                 return;
             }
 
@@ -66,8 +78,7 @@
                 const response = await fetch(url);
 
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    alert(`Error fetching stock data: ${errorText}`);
+                    errorMessageDiv.innerHTML = 'Server offline. Contact administrator.';
                     return;
                 }
 
@@ -75,7 +86,7 @@
                 createTableFromJSON(data);
             } catch (error) {
                 console.error("Fetch error:", error);
-                alert('Failed to fetch data.');
+                errorMessageDiv.innerHTML = 'Server offline. Contact administrator.';
             }
         }
 
@@ -88,7 +99,7 @@
             tableBody.innerHTML = '';
 
             if (!data || !data.columns || !data.data) {
-                alert("No data available.");
+                document.getElementById('error-message').innerHTML = "No data available.";
                 return;
             }
 
