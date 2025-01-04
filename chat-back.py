@@ -1,9 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from openai import OpenAI
+import os  # Import os for accessing environment variables
 
-# Set your OpenAI API key here
-OPENAI_API_KEY = "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"
+# Get your OpenAI API key from an environment variable
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# Check if the API key is not set, and raise an error if missing
+if not OPENAI_API_KEY:
+    raise ValueError("The OpenAI API key is not set. Please set the 'OPENAI_API_KEY' environment variable.")
 
 # Initialize OpenAI client
 client = OpenAI(api_key=OPENAI_API_KEY)
