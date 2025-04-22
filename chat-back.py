@@ -19,8 +19,12 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 app = Flask(__name__)
 CORS(app)  # Enable CORS
 
-# Conversation history
-conversation = [{"role": "system", "content": "You are Warren Buffet."}]
+# Read system prompt from a file
+with open("trustgolfprompt.txt", "r", encoding="utf-8") as file:
+    system_prompt = file.read()
+
+# Initialize conversation with system prompt
+conversation = [{"role": "system", "content": system_prompt}]
 
 @app.route('/chat', methods=['POST'])
 def chat():

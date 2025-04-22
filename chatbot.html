@@ -4,8 +4,9 @@
     <title>Chatbot</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: Georgia, 'Times New Roman', Times, serif, sans-serif;
+            background-color: #000;
+            color: white;
             margin: 0;
             padding: 0;
             display: flex;
@@ -15,56 +16,72 @@
         }
         #chat-container {
             width: 400px;
-            background: #fff;
+            background: #000;
+            border: 1px solid white;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             overflow: hidden;
+        }
+        #logo-container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 10px;
+            background-color: #000;
+        }
+        #logo {
+            height: 40px;
+            width: auto;
         }
         #chat-log {
             height: 400px;
             overflow-y: auto;
             padding: 10px;
-            border-bottom: 1px solid #ddd;
-            background-color: #f9f9f9;
+            background-color: #000;
+            color: white;
+            border-bottom: 1px solid white;
         }
         .message {
             margin: 5px 0;
         }
         .message.user {
             text-align: right;
-            color: blue;
         }
         .message.assistant {
             text-align: left;
-            color: green;
         }
         #input-container {
             display: flex;
             padding: 10px;
-            background-color: #fff;
+            background-color: #000;
+            border-top: 1px solid white;
         }
         #user-input {
             flex: 1;
             padding: 10px;
-            border: 1px solid #ddd;
+            border: 1px solid white;
             border-radius: 4px;
+            background-color: #000;
+            color: white;
         }
         #send-button {
             padding: 10px 20px;
             margin-left: 10px;
-            border: none;
-            background-color: #28a745;
+            border: 1px solid white;
+            background-color: #000;
             color: white;
             border-radius: 4px;
             cursor: pointer;
         }
         #send-button:hover {
-            background-color: #218838;
+            background-color: #111;
         }
     </style>
 </head>
 <body>
     <div id="chat-container">
+        <div id="logo-container">
+            <img src="trustgolf.avif" alt="Logo" id="logo">
+        </div>
         <div id="chat-log"></div>
         <div id="input-container">
             <input type="text" id="user-input" placeholder="Type your message..." />
@@ -78,14 +95,11 @@
             if (!userInput) return;
 
             const chatLog = document.getElementById('chat-log');
-
-            // Add user message to chat log
             chatLog.innerHTML += `<div class="message user"><strong>You:</strong> ${userInput}</div>`;
             chatLog.scrollTop = chatLog.scrollHeight;
 
-            // Send message to backend
             try {
-                const response = await fetch('https://e3de-68-118-144-170.ngrok-free.app/chat', {
+                const response = await fetch('https://7a7c-68-181-17-185.ngrok-free.app/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -96,7 +110,6 @@
 
                 const data = await response.json();
 
-                // Add assistant's reply to chat log
                 if (data.reply) {
                     chatLog.innerHTML += `<div class="message assistant"><strong>Assistant:</strong> ${data.reply}</div>`;
                 } else if (data.error) {
@@ -108,7 +121,6 @@
                 chatLog.innerHTML += `<div class="message assistant"><strong>Assistant:</strong> Unable to reach the server.</div>`;
             }
 
-            // Clear user input
             document.getElementById('user-input').value = '';
         }
     </script>
