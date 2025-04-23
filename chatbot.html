@@ -85,7 +85,7 @@
         <div id="chat-log"></div>
         <div id="input-container">
             <input type="text" id="user-input" placeholder="Type your message..." />
-            <button id="send-button" onclick="sendMessage()">Send</button>
+            <button id="send-button">Send</button>
         </div>
     </div>
 
@@ -93,10 +93,11 @@
         async function sendMessage() {
             const inputField = document.getElementById('user-input');
             const userInput = inputField.value.trim();
-            if (!userInput) return;
 
-            // Clear input immediately for smooth UX
+            // ✅ Clear the input immediately
             inputField.value = '';
+
+            if (!userInput) return;
 
             const chatLog = document.getElementById('chat-log');
             chatLog.innerHTML += `<div class="message user"><strong>You:</strong> ${userInput}</div>`;
@@ -112,11 +113,12 @@
                 });
 
                 const data = await response.json();
+                const reply = typeof data.body === 'string' ? JSON.parse(data.body).reply : data.reply;
 
-                if (data.reply) {
-                    chatLog.innerHTML += `<div class="message assistant"><strong>Assistant:</strong> ${data.reply}</div>`;
-                } else if (data.error) {
-                    chatLog.innerHTML += `<div class="message assistant"><strong>Assistant:</strong> Error: ${data.error}</div>`;
+                if (reply) {
+                    chatLog.innerHTML += `<div class="message assistant"><strong>Assistant:</strong> ${reply}</div>`;
+                } else {
+                    chatLog.innerHTML += `<div class="message assistant"><strong>Assistant:</strong> Error: ${data.error || 'Unknown error.'}</div>`;
                 }
 
                 chatLog.scrollTop = chatLog.scrollHeight;
@@ -125,13 +127,16 @@
             }
         }
 
-        // Add Enter key handler
+        // Handle Enter key
         document.getElementById('user-input').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
                 sendMessage();
             }
         });
+
+        // Handle button click
+        document.getElementById('send-button').addEventListener('click', sendMessage);
     </script>
 </body>
 </html>
