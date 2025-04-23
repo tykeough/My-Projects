@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lambda Test</title>
+</head>
+<body>
+  <h1>Lambda Response Test</h1>
+  <button onclick="callLambda()">Send Test Message</button>
+  <pre id="output">Waiting...</pre>
+
+  <script>
+    async function callLambda() {
+      const output = document.getElementById('output');
+
+      try {
+        const response = await fetch('https://swnbldo5eorz54u6mi3bdrvx7a0zkqys.lambda-url.us-east-2.on.aws/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: "test" })
+        });
+
+        const data = await response.json();
+
+        // Try parsing inner body (Lambda might stringify it)
+        const result = typeof data.body === 'string' ? JSON.parse(data.body) : data;
+
+        output.textContent = result.reply || result.error || JSON.stringify(result);
+      } catch (err) {
+        output.textContent = "Error: " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>

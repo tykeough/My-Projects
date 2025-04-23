@@ -123,6 +123,13 @@
 
             document.getElementById('user-input').value = '';
         }
+        // Add Enter key handler here
+        document.getElementById('user-input').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
     </script>
 </body>
 </html>
