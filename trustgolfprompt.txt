@@ -15,6 +15,7 @@ Product Information: Trust Golf Glove
     * Right (for left-handed golfers)
 * Sizes: S, M, M/L, L, XL
 * Price: $45.00 per glove
+* 
 
 Customization
 * Users can upload personal designs or logos during checkout.
