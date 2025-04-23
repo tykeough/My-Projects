@@ -91,8 +91,12 @@
 
     <script>
         async function sendMessage() {
-            const userInput = document.getElementById('user-input').value.trim();
+            const inputField = document.getElementById('user-input');
+            const userInput = inputField.value.trim();
             if (!userInput) return;
+
+            // Clear input immediately for smooth UX
+            inputField.value = '';
 
             const chatLog = document.getElementById('chat-log');
             chatLog.innerHTML += `<div class="message user"><strong>You:</strong> ${userInput}</div>`;
@@ -107,7 +111,6 @@
                     body: JSON.stringify({ message: userInput })
                 });
 
-
                 const data = await response.json();
 
                 if (data.reply) {
@@ -120,10 +123,9 @@
             } catch (err) {
                 chatLog.innerHTML += `<div class="message assistant"><strong>Assistant:</strong> Unable to reach the server.</div>`;
             }
-
-            document.getElementById('user-input').value = '';
         }
-        // Add Enter key handler here
+
+        // Add Enter key handler
         document.getElementById('user-input').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
